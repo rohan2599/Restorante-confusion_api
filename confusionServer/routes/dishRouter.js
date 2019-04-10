@@ -152,7 +152,7 @@ dishRouter.route('/:dishId/comments')
 		Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 			if(dish!=null){
-				for(var i= dish.comments.length-1 ;i>=0){
+				for(var i= dish.comments.length-1 ;i>=0;i++){
 					dish.comments.id(dish.comments[i]._id).remove();
 				}
 					dish.save()
