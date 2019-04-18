@@ -5,7 +5,9 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
-
+var passport = require('passport');
+var authenticate = require('./authenticate.js');
+var config = require('./config');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var dishRouter = require('./routes/dishRouter');
@@ -14,7 +16,7 @@ var leaderRouter = require('./routes/leaderRouter');
 
 
 const mongoose = require('mongoose');
-const url = 'mongodb://localhost:27017/conFusion';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url);
 
 const Dishes = require('./models/dishes.js');
@@ -47,14 +49,18 @@ app.use(session({
 	store: new FileStore()
 }));
 
+app.use(passport.initialize());
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+
+//if  user is present , then move to the next request
 
 function auth(req,res,next){
 
 	console.log(req.session);
 
-	if(!req.session.user){
+	if(!req.user){
 	
 		var err = new Error('You are not authenticated');
 		err.status= 401;
@@ -64,16 +70,8 @@ function auth(req,res,next){
 }
 
 else{
-
-	if(req.session.user === 'authenticated'){
-		next();
-	}
-
-	else{
-		var err = new Error('You are not authenticated');
-		err.status= 401;
-		return next(err);
-	}
+	next();
+	
 }
 
 }
