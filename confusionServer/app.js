@@ -33,6 +33,19 @@ connect.then((db)=>{
 
 var app = express();
 
+
+app.all('*',(req,res,next)=>{
+
+	if(req.secure){
+		return next();
+
+	}
+	else{
+		res.redirect(307,'https://'+ req.hostname+ ':' +app.get('secPort ')+ req.url);
+	}
+
+})
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
@@ -41,13 +54,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 //app.use(cookieParser('12345-67890-09876-54321'));
 
-app.use(session({
-	name:'session-id',
-	secret:'12345-67890-09876-54321',
-	resave: false,
-	saveUninitialized:false,
-	store: new FileStore()
-}));
+// app.use(session({
+// 	name:'session-id',
+// 	secret:'12345-67890-09876-54321',
+// 	resave: false,
+// 	saveUninitialized:false,
+// 	store: new FileStore()
+// }));
 
 app.use(passport.initialize());
 
@@ -56,27 +69,27 @@ app.use('/users', usersRouter);
 
 //if  user is present , then move to the next request
 
-function auth(req,res,next){
+// function auth(req,res,next){
 
-	console.log(req.session);
+// 	console.log(req.session);
 
-	if(!req.user){
+// 	if(!req.user){
 	
-		var err = new Error('You are not authenticated');
-		err.status= 401;
-		return next(err);
+// 		var err = new Error('You are not authenticated');
+// 		err.status= 401;
+// 		return next(err);
 	
 
-}
+// }
 
-else{
-	next();
+// else{
+// 	next();
 	
-}
+// }
 
-}
+// }
 
-app.use(auth);
+// app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

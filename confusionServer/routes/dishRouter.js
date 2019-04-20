@@ -25,7 +25,7 @@ dishRouter.route('/')
 })
 
 
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyadmin,(req,res,next)=>{
 	Dishes.create(req.body)
 	.then((dishes)=>{
 		console.log('Dish created successfully');
@@ -38,11 +38,11 @@ dishRouter.route('/')
 		next(err);
 	})
 })
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyadmin,(req,res,next)=>{
 	res.statusCode = 403;
 	res.end('Operation not supported');
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyadmin,(req,res,next)=>{
 		Dishes.remove({})
 	.then((dishes)=>{
 		console.log('Dish deleted successfully');
@@ -70,11 +70,11 @@ dishRouter.route('/:dishId')
 	})
 
 })
-.post(authenticate.verifyUser, (req, res, next) => {
+.post(authenticate.verifyUser,authenticate.verifyadmin, (req, res, next) => {
   res.statusCode = 403;
   res.end('POST operation not supported on /dishes/'+ req.params.dishId);
 })
-.put( authenticate.verifyUser,(req, res, next) => {
+.put( authenticate.verifyUser,authenticate.verifyadmin,(req, res, next) => {
  	
  	Dishes.findByIdAndUpdate(req.params.dishId,
  	{
@@ -89,7 +89,7 @@ dishRouter.route('/:dishId')
 		next(err);
 	})
 })
-.delete(authenticate.verifyUser, (req, res, next) => {
+.delete(authenticate.verifyUser,authenticate.verifyadmin, (req, res, next) => {
     Dishes.findByIdAndRemove(req.params.dishId)
     .then((dish)=>{
     	res.statusCode=200;
@@ -161,7 +161,7 @@ dishRouter.route('/:dishId/comments')
 	res.statusCode = 403;
 	res.end('Operation not supported');
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyadmin,(req,res,next)=>{
 		Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 			if(dish!=null){
@@ -232,7 +232,7 @@ dishRouter.route('/:dishId/comments/:commentId')
  	.then((dish)=>{
 		
 
-		if(dish!=null &&  dish.comments.id(req.params.commentId)!=null ){
+		if(dish!=null &&  dish.comments.id(req.params.commentId)!=null  && dish.comments.id(req.params.commentId).author.equals(req.user._id)){
 
 			if(req.body.rating){
 				dish.comments.id(req.params.commentId).rating= req.body.rating;
@@ -262,9 +262,15 @@ dishRouter.route('/:dishId/comments/:commentId')
 			return next(err);
 		}
 
-		else{
+		else if(dish.comments.id(req.params.commentId)==null){
 			err = new Error('Comment'+ req.params.commentId +'not found');
 			err.status = 404;
+			return next(err);
+		}
+
+		else{
+			err = new Error('You are not authorized to update this comment');
+			err.status = 403;
 			return next(err);
 		}
 
@@ -278,7 +284,7 @@ dishRouter.route('/:dishId/comments/:commentId')
 .delete( authenticate.verifyUser,(req, res, next) => {
    	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
-			if(dish!=null && dish.comments.id(req.params.commentId)!=null){
+			if(dish!=null && dish.comments.id(req.params.commentId)!=null &&dish.comments.id(req.params.commentId).author.equals(req.user._id)){
 			
 					dish.comments.id(req.params.commentId).remove();
 				
@@ -300,10 +306,18 @@ dishRouter.route('/:dishId/comments/:commentId')
 			return next(err);
 		}
 
-		else{
+		else if(dish.comments.id(req.params.commentId)==null){
 		err = new Error('Comment'+ req.params.commentId +'not found');
 		err.status =404;
 		return next(err);
+
+		}
+
+		else{
+		
+			var err = new Error('You are not authorized to delete this comment');
+			err.status - 403;
+			return next(err);
 
 		}
 
